@@ -1,4 +1,4 @@
-namespace Janet.CLI.Utilities.Logging
+namespace Janet.Core.Enums
 {
     public enum LogLevel
     {

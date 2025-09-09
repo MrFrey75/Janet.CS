@@ -1,20 +1,22 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using Janet.CLI.Models;
-using Janet.CLI.Utilities.Logging;
+using Janet.Core.Logging;
+using Janet.Core.Models;
 
-namespace Janet.CLI.Services;
+namespace Janet.Core.Services;
 
 public class OllamaApiService
 {
     private readonly HttpClient _httpClient;
     private readonly ISpectreLogger _logger;
+    private readonly ConfigService _configService;
 
-    public OllamaApiService(ISpectreLogger logger, AppSettings settings)
+    public OllamaApiService(ISpectreLogger logger, AppSettings settings, ConfigService configService)
     {
         _logger = logger;
         _httpClient = new HttpClient { BaseAddress = new Uri(settings.Ollama.BaseUrl) };
+        _configService = configService;
     }
 
     public async Task<List<OllamaModel>> GetAvailableModelsAsync(CancellationToken cancellationToken)
@@ -34,7 +36,7 @@ public class OllamaApiService
             return [];
         }
     }
-    
+
     public async Task<IntentResponse> GetIntentAsync(string classifierModel, string userMessage, CancellationToken cancellationToken)
     {
         // System prompt for intent classification

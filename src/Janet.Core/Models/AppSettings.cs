@@ -1,4 +1,6 @@
-namespace Janet.CLI.Models;
+using Janet.Core.Models;
+
+namespace Janet.Core.Models;
 
 public class AppSettings
 {

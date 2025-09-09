@@ -1,15 +1,24 @@
 using System.Text.Json;
-using Janet.CLI.Models;
-using Janet.CLI.Utilities.Logging;
+using Janet.Core.Enums;
+using Janet.Core.Logging;
+using Janet.Core.Models;
 using Spectre.Console;
 
-namespace Janet.CLI.Services;
+namespace Janet.Core.Services;
+
+public interface IChatHandlerService
+{
+    IReadOnlyList<ChatMessage> ConversationHistory { get; }
+    Task InitializeAsync(CancellationToken cancellationToken = default);
+    Task<string> StreamResponseAsync(string userMessage, string chatModel, CancellationToken cancellationToken = default);
+    Task ClearHistoryAsync(CancellationToken cancellationToken = default);
+}
 
 /// <summary>
 /// Manages a chat conversation, including history persistence and streaming 
 /// interaction with the Ollama API.
 /// </summary>
-public class ChatService : IChatService
+public class ChatHandlerService : IChatHandlerService
 {
     private readonly ISpectreLogger _logger;
     private readonly OllamaApiService _apiService;
@@ -19,13 +28,14 @@ public class ChatService : IChatService
     private List<ChatMessage> _conversationHistory = new();
     public IReadOnlyList<ChatMessage> ConversationHistory => _conversationHistory.AsReadOnly();
 
-    public ChatService(ISpectreLogger logger, OllamaApiService apiService, ConfigService configService)
-    {
-        _logger = logger;
-        _apiService = apiService;
-        _configService = new ConfigService(apiService, logger);
-        _ = InitializeAsync();
-    }
+public ChatHandlerService(ISpectreLogger logger, OllamaApiService apiService, ConfigService configService)
+{
+    _logger = logger;
+    _apiService = apiService;
+    // Correctly use the injected dependency
+    _configService = configService; 
+    _ = InitializeAsync();
+}
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -36,7 +46,7 @@ public class ChatService : IChatService
     public async Task<string> StreamResponseAsync(string userMessage, string chatModel, CancellationToken cancellationToken = default)
     {
         // 1. Add user message to the internal history
-        var userChatMessage = new ChatMessage("user", userMessage);
+        var userChatMessage = new ChatMessage(ChatMessageType.User, userMessage);
         _conversationHistory.Add(userChatMessage);
 
         // 2. Stream the API response
@@ -47,7 +57,7 @@ public class ChatService : IChatService
         // 3. Handle the response
         if (!string.IsNullOrWhiteSpace(fullResponse))
         {
-            _conversationHistory.Add(new ChatMessage("assistant", fullResponse));
+            _conversationHistory.Add(new ChatMessage(ChatMessageType.Assistant, fullResponse));
         }
         else
         {
@@ -96,7 +106,7 @@ public class ChatService : IChatService
             {
                 return new List<ChatMessage>();
             }
-            
+
             var history = JsonSerializer.Deserialize<List<ChatMessage>>(jsonString);
             return history ?? new List<ChatMessage>();
         }

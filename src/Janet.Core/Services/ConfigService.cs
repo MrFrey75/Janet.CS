@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Janet.CLI.Utilities.Logging;
+using Janet.Core.Logging;
 
-namespace Janet.CLI.Services;
+namespace Janet.Core.Services;
 
 public class ConfigService
 {

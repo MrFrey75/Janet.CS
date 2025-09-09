@@ -1,4 +1,4 @@
-namespace Janet.CLI.Models;
+namespace Janet.Core.Models;
 
 public class LoggingSettings
 {

@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Janet.CLI.Models;
+using Janet.Core.Models;
+using Janet.Core.Services;
+using Janet.Core.Logging;
 using Janet.CLI.Services;
-using Janet.CLI.Utilities.Logging;
 
 namespace Janet.CLI;
 
@@ -53,8 +54,8 @@ public static class Program
         var configService = serviceProvider.GetRequiredService<ConfigService>();
         configService.LoadSettingsAsync(CancellationToken.None).GetAwaiter().GetResult();
 
-        // 6. Register ChatService
-        services.AddSingleton<IChatService, ChatService>();
+        // 6. Register ChatHandlerService
+        services.AddSingleton<IChatHandlerService, ChatHandlerService>();
 
     }
 }

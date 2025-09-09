@@ -1,8 +1,9 @@
+using Janet.Core.Enums;
 using Spectre.Console;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace Janet.CLI.Utilities.Logging;
+namespace Janet.Core.Logging;
 
 /// <summary>
 /// An implementation of ILogger that uses Spectre.Console for rich, colored output.
@@ -11,12 +12,12 @@ public class SpectreLogger : ISpectreLogger
 {
     private LogLevel _currentLogLevel = LogLevel.Info; // Changed default to Info
 
-    public void SetLogLevel(LogLevel level)
+    void ISpectreLogger.SetLogLevel(LogLevel level)
     {
         _currentLogLevel = level;
     }
-
-    public LogLevel GetLogLevel() => _currentLogLevel;
+    
+    LogLevel ISpectreLogger.GetLogLevel() => _currentLogLevel;
 
     private void Log(string message, LogLevel level, string sourceFilePath, string memberName)
     {

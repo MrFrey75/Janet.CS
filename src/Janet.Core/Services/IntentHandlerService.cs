@@ -1,27 +1,29 @@
-using Janet.CLI.Actions;
-using Janet.CLI.Models;
-using Janet.CLI.Utilities.Logging;
+
+using Janet.Core.Actions;
+using Janet.Core.Enums;
+using Janet.Core.Logging;
+using Janet.Core.Models;
 using Spectre.Console;
 
-namespace Janet.CLI.Services;
+namespace Janet.Core.Services;
 
 public class IntentHandlerService
 {
     private readonly OllamaApiService _apiService;
     private readonly ISpectreLogger _logger;
-    private readonly IChatService _chatService;
+    private readonly IChatHandlerService _ChatHandlerService;
 
-    public IntentHandlerService(OllamaApiService apiService, ISpectreLogger logger, IChatService chatService)
+    public IntentHandlerService(OllamaApiService apiService, ISpectreLogger logger, IChatHandlerService ChatHandlerService)
     {
         _apiService = apiService;
         _logger = logger;
-        _chatService = chatService;
+        _ChatHandlerService = ChatHandlerService;
     }
 
     public async Task HandleIntentAsync(IntentResponse intent, string userInput, List<ChatMessage> history, string chatModel, CancellationToken cancellationToken)
     {
         _logger.Info($"Handling intent: '{intent.Intent}' with confidence {intent.Confidence:P0}");
-        history.Add(new ChatMessage("user", userInput));
+        history.Add(new ChatMessage(ChatMessageType.User, userInput));
         bool shouldSummarizeToolResult = false;
 
         if (intent.Confidence < 0.7 && intent.Intent != "general_chat")
@@ -41,7 +43,7 @@ public class IntentHandlerService
                 shouldSummarizeToolResult = true;
                 break;
             default:
-                await _chatService.StreamResponseAsync(userInput, chatModel, cancellationToken);
+                await _ChatHandlerService.StreamResponseAsync(userInput, chatModel, cancellationToken);
                 break;
         }
 

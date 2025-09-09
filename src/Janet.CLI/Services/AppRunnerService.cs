@@ -1,5 +1,6 @@
-using Janet.CLI.Models;
-using Janet.CLI.Utilities.Logging;
+using Janet.Core.Logging;
+using Janet.Core.Models;
+using Janet.Core.Services;
 using Spectre.Console;
 
 namespace Janet.CLI.Services;
@@ -10,20 +11,22 @@ public class AppRunnerService
     private readonly IntentHandlerService _intentHandlerService;
     private readonly ISpectreLogger _logger;
     private readonly ConfigService _configService;
-    private readonly IChatService _chatService;
+    private readonly IChatHandlerService _ChatHandlerService;
+    private List<ChatMessage> _conversationHistory = new List<ChatMessage>();
 
     public AppRunnerService(
         OllamaApiService apiService,
         IntentHandlerService intentHandlerService,
         ISpectreLogger logger,
         ConfigService configService,
-        IChatService chatService)
+        IChatHandlerService ChatHandlerService)
     {
         _apiService = apiService;
         _intentHandlerService = intentHandlerService;
         _logger = logger;
         _configService = configService;
-        _chatService = chatService;
+        _ChatHandlerService = ChatHandlerService;
+        _conversationHistory = ChatHandlerService.ConversationHistory.ToList();
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -47,11 +50,10 @@ public class AppRunnerService
 
             _logger.Info($"Using '{classifierModel}' for intent and '{chatModel}' for chat.");
 
+
             AnsiConsole.Clear();
             AnsiConsole.MarkupLine($"[grey]Classifier:[/] {classifierModel} | [grey]Chat Model:[/] {chatModel}");
             AnsiConsole.MarkupLine("Type a message. '[red]exit[/]' to quit.");
-
-            var conversationHistory = _chatService.ConversationHistory.ToList();
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -75,7 +77,7 @@ public class AppRunnerService
 
                 // Streaming chat response
                 AnsiConsole.MarkupLine("[grey]💬 Chatting...[/]");
-                await _intentHandlerService.HandleIntentAsync(intent, userInput, conversationHistory, chatModel, cancellationToken);
+                await _intentHandlerService.HandleIntentAsync(intent, userInput, _conversationHistory, chatModel, cancellationToken);
             }
         }
         catch (OperationCanceledException)

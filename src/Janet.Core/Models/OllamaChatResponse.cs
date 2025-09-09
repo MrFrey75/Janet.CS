@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Janet.CLI.Models;
+namespace Janet.Core.Models;
 
 public class OllamaChatResponse
 {

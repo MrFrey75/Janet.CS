@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
+using Janet.Core.Enums;
 
-namespace Janet.CLI.Utilities.Logging;
+namespace Janet.Core.Logging;
 
 /// <summary>
 /// Defines the contract for a logger that uses Spectre.Console for output.
