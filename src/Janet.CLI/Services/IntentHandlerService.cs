@@ -7,9 +7,9 @@ namespace Janet.CLI.Services;
 public class IntentHandlerService
 {
     private readonly OllamaApiService _apiService;
-    private readonly ILogger _logger;
+    private readonly ISpectreLogger _logger;
 
-    public IntentHandlerService(OllamaApiService apiService, ILogger logger)
+    public IntentHandlerService(OllamaApiService apiService, ISpectreLogger logger)
     {
         _apiService = apiService;
         _logger = logger;
@@ -17,13 +17,13 @@ public class IntentHandlerService
 
     public async Task HandleIntentAsync(IntentResponse intent, string userInput, List<ChatMessage> history, string chatModel, CancellationToken cancellationToken)
     {
-        _logger.Log($"Handling intent: '{intent.Intent}' with confidence {intent.Confidence:P0}");
+        _logger.Info($"Handling intent: '{intent.Intent}' with confidence {intent.Confidence:P0}");
         history.Add(new ChatMessage("user", userInput));
         bool shouldSummarizeToolResult = false;
 
         if (intent.Confidence < 0.7 && intent.Intent != "general_chat")
         {
-            _logger.Log("Confidence is low, switching to 'general_chat'.", ILogger.LogLevel.Warning);
+            _logger.Warning("Confidence is low, switching to 'general_chat'.");
             intent = intent with { Intent = "general_chat" };
         }
 
@@ -81,7 +81,7 @@ public class IntentHandlerService
         else if (history.LastOrDefault()?.Role == "user")
         {
             history.RemoveAt(history.Count - 1);
-            _logger.Log("Assistant returned an empty response. Removed last user message to allow retry.", ILogger.LogLevel.Warning);
+            _logger.Warning("Assistant returned an empty response. Removed last user message to allow retry.");
         }
     }
 }

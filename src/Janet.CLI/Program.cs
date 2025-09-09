@@ -40,7 +40,7 @@ public static class Program
         services.AddSingleton(appSettings);
 
         // 3. Register the logger
-        services.AddSingleton<ILogger, SpectreLogger>();
+        services.AddSingleton<ISpectreLogger, SpectreLogger>();
 
         // 4. Register application services
         services.AddTransient<OllamaApiService>();

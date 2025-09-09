@@ -6,35 +6,38 @@ namespace Janet.CLI.Utilities.Logging;
 /// <summary>
 /// An implementation of ILogger that uses Spectre.Console for rich, colored output.
 /// </summary>
-public class SpectreLogger : ILogger
+public class SpectreLogger : ISpectreLogger
 {
-    private ILogger.LogLevel _currentLogLevel = ILogger.LogLevel.Debug;
+    private LogLevel _currentLogLevel = LogLevel.Debug;
 
-    public void SetLogLevel(ILogger.LogLevel level)
+    public void SetLogLevel(LogLevel level)
     {
         _currentLogLevel = level;
     }
 
-    public void Log(string message, ILogger.LogLevel level = ILogger.LogLevel.Info, [CallerFilePath] string sourceFilePath = "", [CallerMemberName] string memberName = "")
+    public LogLevel GetLogLevel() => _currentLogLevel;
+
+    private void Log(string message, LogLevel level = LogLevel.Info, [CallerFilePath] string sourceFilePath = "", [CallerMemberName] string memberName = "")
     {
         if (level < _currentLogLevel) return;
         string source = $"{Path.GetFileNameWithoutExtension(sourceFilePath)}.{memberName}";
         var prefix = level switch
         {
-            ILogger.LogLevel.Debug => $"[grey]DEBUG | {source}[/]",
-            ILogger.LogLevel.Info => $"[blue]INFO | {source}[/]",
-            ILogger.LogLevel.Warning => $"[yellow]WARN | {source}[/]",
-            ILogger.LogLevel.Error => $"[red]ERROR | {source}[/]",
+            LogLevel.Debug => $"[grey]DEBUG | {source}[/]",
+            LogLevel.Info => $"[blue]INFO | {source}[/]",
+            LogLevel.Warning => $"[yellow]WARN | {source}[/]",
+            LogLevel.Error => $"[red]ERROR | {source}[/]",
             _ => ""
         };
         AnsiConsole.MarkupLine($"{prefix}: {message}");
     }
 
-    public void LogError(string message, Exception ex, [CallerFilePath] string sourceFilePath = "", [CallerMemberName] string memberName = "")
-    {
-        if (ILogger.LogLevel.Error < _currentLogLevel) return;
-        string source = $"{Path.GetFileNameWithoutExtension(sourceFilePath)}.{memberName}";
-        AnsiConsole.MarkupLine($"[red]ERROR | {source}[/]: {message}");
-        AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-    }
+    public void Debug(string message, [CallerFilePath] string sourceFilePath = "", [CallerMemberName] string memberName = "")
+        => Log(message, LogLevel.Debug, sourceFilePath, memberName);
+    public void Info(string message, [CallerFilePath] string sourceFilePath = "", [CallerMemberName] string memberName = "")
+        => Log(message, LogLevel.Info, sourceFilePath, memberName);
+    public void Warning(string message, [CallerFilePath] string sourceFilePath = "", [CallerMemberName] string memberName = "")
+        => Log(message, LogLevel.Warning, sourceFilePath, memberName);
+    public void Error(string message, Exception ex, [CallerFilePath] string sourceFilePath = "", [CallerMemberName] string memberName = "")
+        => Log(message + $": {ex.Message}", LogLevel.Error, sourceFilePath, memberName);
 }

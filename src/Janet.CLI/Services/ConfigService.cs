@@ -6,9 +6,9 @@ namespace Janet.CLI.Services;
 public class ConfigService
 {
     private readonly OllamaApiService _apiService;
-    private readonly ILogger _logger;
-    
-    public ConfigService(OllamaApiService apiService, ILogger logger)
+    private readonly ISpectreLogger _logger;
+
+    public ConfigService(OllamaApiService apiService, ISpectreLogger logger)
     {
         _apiService = apiService;
         _logger = logger;
@@ -24,15 +24,15 @@ public class ConfigService
             if (settings != null)
             {
                 // Apply settings to the application as needed
-                _logger.Log("Settings loaded successfully.", ILogger.LogLevel.Info);
+                _logger.Info("Settings loaded successfully.");
             } else
             {
-                _logger.LogError("Settings file is empty or malformed.");
+                _logger.Warning("Settings file is empty or malformed.");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError("Failed to load settings from Ollama API.", ex);
+            _logger.Error("Failed to load settings from Ollama API.", ex);
             throw;
         }
     }

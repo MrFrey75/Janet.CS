@@ -9,9 +9,9 @@ namespace Janet.CLI.Services;
 public class OllamaApiService
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger _logger;
+    private readonly ISpectreLogger _logger;
 
-    public OllamaApiService(ILogger logger, AppSettings settings)
+    public OllamaApiService(ISpectreLogger logger, AppSettings settings)
     {
         _logger = logger;
         _httpClient = new HttpClient { BaseAddress = new Uri(settings.Ollama.BaseUrl) };
@@ -21,16 +21,16 @@ public class OllamaApiService
     {
         try
         {
-            _logger.Log("Requesting /api/tags", ILogger.LogLevel.Debug);
+            _logger.Debug("Requesting /api/tags");
             var response = await _httpClient.GetAsync("/api/tags", cancellationToken);
             response.EnsureSuccessStatusCode();
             var modelsResponse = await response.Content.ReadFromJsonAsync<OllamaTagsResponse>(cancellationToken: cancellationToken);
-            _logger.Log($"Found {modelsResponse?.Models?.Count ?? 0} models.", ILogger.LogLevel.Debug);
+            _logger.Debug($"Found {modelsResponse?.Models?.Count ?? 0} models.");
             return modelsResponse?.Models ?? [];
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError("Failed to connect to Ollama API. Please ensure it is running.", ex);
+            _logger.Error("Failed to connect to Ollama API. Please ensure it is running.", ex);
             return [];
         }
     }
@@ -42,17 +42,17 @@ public class OllamaApiService
         try
         {
             var requestPayload = new { model = classifierModel, format = "json", messages = new[] { new { role = "system", content = systemPrompt }, new { role = "user", content = userMessage } }, stream = false };
-            _logger.Log($"Requesting intent from model '{classifierModel}'.", ILogger.LogLevel.Debug);
+            _logger.Info($"Requesting intent from model '{classifierModel}'.");
             var response = await _httpClient.PostAsJsonAsync("/api/chat", requestPayload, cancellationToken);
             response.EnsureSuccessStatusCode();
             var ollamaResponse = await response.Content.ReadFromJsonAsync<OllamaChatResponse>(cancellationToken: cancellationToken);
             var intentJson = ollamaResponse?.Message?.Content ?? "{}";
-            _logger.Log($"Raw JSON from classifier: {intentJson}", ILogger.LogLevel.Debug);
+            _logger.Debug($"Raw JSON from classifier: {intentJson}");
             return JsonSerializer.Deserialize<IntentResponse>(intentJson) ?? new IntentResponse();
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to get intent for message: '{userMessage}'", ex);
+            _logger.Error($"Failed to get intent for message: '{userMessage}'", ex);
             return new IntentResponse { Intent = "general_chat", Confidence = 0.0 };
         }
     }
@@ -64,7 +64,7 @@ public class OllamaApiService
         try
         {
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/api/chat") { Content = new StringContent(JsonSerializer.Serialize(requestPayload), Encoding.UTF8, "application/json") };
-            _logger.Log($"Streaming chat from model '{chatModel}'.", ILogger.LogLevel.Debug);
+            _logger.Debug($"Streaming chat from model '{chatModel}'.");
             using var response = await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -83,8 +83,8 @@ public class OllamaApiService
                 if (chatChunk?.Done ?? false) break;
             }
         }
-        catch (OperationCanceledException) { _logger.Log("Chat stream cancelled.", ILogger.LogLevel.Warning); }
-        catch (Exception ex) { _logger.LogError($"Failed during streaming chat with model {chatModel}.", ex); onChunkReceived($"\n[red]An error occurred.[/]"); }
+        catch (OperationCanceledException) { _logger.Warning("Chat stream cancelled."); }
+        catch (Exception ex) { _logger.Error($"Failed during streaming chat with model {chatModel}.", ex); onChunkReceived($"\n[red]An error occurred.[/]"); }
         return fullResponse.ToString();
     }
 }

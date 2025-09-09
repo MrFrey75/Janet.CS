@@ -8,9 +8,12 @@ public class AppRunnerService
 {
     private readonly OllamaApiService _apiService;
     private readonly IntentHandlerService _intentHandlerService;
-    private readonly ILogger _logger;
+    private readonly ISpectreLogger _logger;
 
-    public AppRunnerService(OllamaApiService apiService, IntentHandlerService intentHandlerService, ILogger logger)
+    public AppRunnerService(
+        OllamaApiService apiService,
+        IntentHandlerService intentHandlerService,
+        ISpectreLogger logger)
     {
         _apiService = apiService;
         _intentHandlerService = intentHandlerService;
@@ -22,8 +25,8 @@ public class AppRunnerService
         Console.Title = "Ollama Agent";
         AnsiConsole.Write(new FigletText("Ollama Agent").Centered().Color(Color.Orange1));
         AnsiConsole.MarkupLine("[grey]An intelligent chat client that classifies intent before responding.[/]");
-        _logger.Log("Application starting.", ILogger.LogLevel.Info);
-        
+        _logger.Info("Application starting.");
+
         try
         {
             var availableModels = await GetAndVerifyModelsAsync(cancellationToken);
@@ -31,45 +34,64 @@ public class AppRunnerService
 
             var classifierModel = SelectModel("Select a [yellow]fast[/] model for classification:", availableModels);
             var chatModel = SelectModel("Select a [green]powerful[/] model for chat:", availableModels);
-            _logger.Log($"Using '{classifierModel}' for intent and '{chatModel}' for chat.");
+            _logger.Info($"Using '{classifierModel}' for intent and '{chatModel}' for chat.");
 
             AnsiConsole.Clear();
             AnsiConsole.MarkupLine($"[grey]Classifier:[/] {classifierModel} | [grey]Chat Model:[/] {chatModel}");
             AnsiConsole.MarkupLine("Type a message. '[red]exit[/]' to quit.");
-            
+
             var conversationHistory = new List<ChatMessage>();
+
             while (!cancellationToken.IsCancellationRequested)
             {
-                var userInput = AnsiConsole.Ask<string>("\n[bold blue]You:[/] ");
+                string userInput;
+
+                if (AnsiConsole.Profile.Capabilities.Interactive)
+                {
+                    userInput = AnsiConsole.Ask<string>("\n[bold blue]You:[/] ");
+                }
+                else
+                {
+                    AnsiConsole.MarkupLine("[yellow]Non-interactive mode: reading from Console.ReadLine()[/]");
+                    userInput = Console.ReadLine() ?? string.Empty;
+                }
+
                 if (userInput.Equals("exit", StringComparison.OrdinalIgnoreCase)) break;
 
-                await AnsiConsole.Status().Spinner(Spinner.Known.Dots).StartAsync("🧠 Thinking...", async ctx =>
-                {
-                    var intent = await _apiService.GetIntentAsync(classifierModel, userInput, cancellationToken);
+                // Intent classification
+                AnsiConsole.MarkupLine("[grey]🧠 Classifying intent...[/]");
+                var intent = await _apiService.GetIntentAsync(classifierModel, userInput, cancellationToken);
+
+                // Streaming chat response
+                AnsiConsole.MarkupLine("[grey]💬 Chatting...[/]");
                     await _intentHandlerService.HandleIntentAsync(intent, userInput, conversationHistory, chatModel, cancellationToken);
-                });
             }
         }
-        catch (OperationCanceledException) { /* Expected on Ctrl+C */ }
+        catch (OperationCanceledException)
+        {
+            /* Expected on Ctrl+C */
+        }
         catch (Exception ex)
         {
-            _logger.LogError("An unexpected, fatal error occurred.", ex);
+            _logger.Error("An unexpected, fatal error occurred.", ex);
         }
         finally
         {
             AnsiConsole.MarkupLine("\n[yellow]Exiting application.[/]");
-            _logger.Log("Application shutting down.", ILogger.LogLevel.Info);
+            _logger.Info("Application shutting down.");
         }
     }
-    
+
     private async Task<List<OllamaModel>> GetAndVerifyModelsAsync(CancellationToken cancellationToken)
     {
-        List<OllamaModel> models = [];
+        List<OllamaModel> models = new();
         await AnsiConsole.Status().StartAsync("Connecting to Ollama...", async ctx =>
         {
             models = await _apiService.GetAvailableModelsAsync(cancellationToken);
         });
+
         if (models.Count != 0) return models;
+
         AnsiConsole.MarkupLine("[red]Error:[/] Could not connect to Ollama or no models were found.");
         AnsiConsole.MarkupLine("[grey]Please ensure Ollama is running and has models available.[/]");
         return models;
@@ -77,7 +99,18 @@ public class AppRunnerService
 
     private static string SelectModel(string title, List<OllamaModel> models)
     {
-        var prompt = new SelectionPrompt<string>().Title(title).PageSize(10).AddChoices(models.Select(m => m.Name));
-        return AnsiConsole.Prompt(prompt);
+        if (AnsiConsole.Profile.Capabilities.Interactive)
+        {
+            var prompt = new SelectionPrompt<string>()
+                .Title(title)
+                .PageSize(10)
+                .AddChoices(models.Select(m => m.Name));
+            return AnsiConsole.Prompt(prompt);
+        }
+
+        // Non-interactive fallback
+        var fallback = models.First().Name;
+        AnsiConsole.MarkupLine($"[yellow]Non-interactive environment detected. Defaulting to:[/] {fallback}");
+        return fallback;
     }
 }
