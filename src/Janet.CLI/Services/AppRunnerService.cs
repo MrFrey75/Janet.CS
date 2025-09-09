@@ -10,17 +10,20 @@ public class AppRunnerService
     private readonly IntentHandlerService _intentHandlerService;
     private readonly ISpectreLogger _logger;
     private readonly ConfigService _configService;
+    private readonly IChatService _chatService;
 
     public AppRunnerService(
         OllamaApiService apiService,
         IntentHandlerService intentHandlerService,
         ISpectreLogger logger,
-        ConfigService configService)
+        ConfigService configService,
+        IChatService chatService)
     {
         _apiService = apiService;
         _intentHandlerService = intentHandlerService;
         _logger = logger;
         _configService = configService;
+        _chatService = chatService;
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -48,7 +51,7 @@ public class AppRunnerService
             AnsiConsole.MarkupLine($"[grey]Classifier:[/] {classifierModel} | [grey]Chat Model:[/] {chatModel}");
             AnsiConsole.MarkupLine("Type a message. '[red]exit[/]' to quit.");
 
-            var conversationHistory = new List<ChatMessage>();
+            var conversationHistory = _chatService.ConversationHistory.ToList();
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -56,7 +59,7 @@ public class AppRunnerService
 
                 if (AnsiConsole.Profile.Capabilities.Interactive)
                 {
-                    userInput = AnsiConsole.Ask<string>("\n[bold blue]You:[/] ");
+                    userInput = AnsiConsole.Ask<string>($"\n[bold blue]{_configService.GetUserName()}:[/] ");
                 }
                 else
                 {

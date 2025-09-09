@@ -56,7 +56,17 @@ public class ConfigService
         }
         SaveSettingsAsync(CancellationToken.None).Wait();
     }
-    
+
+    public string GetAiName()
+    {
+        return string.IsNullOrWhiteSpace(_settings.SystemName) ? "AI Bot" : _settings.SystemName;
+    }
+
+    public string GetUserName()
+    {
+        return string.IsNullOrWhiteSpace(_settings.UserName) ? "User" : _settings.UserName;
+    }
+
     public async Task SaveSettingsAsync(CancellationToken cancellationToken)
     {
         try
@@ -77,7 +87,7 @@ public class ConfigService
 public class ConfigSettings
 {
 
-    public string ApiUrl { get; set; } = "http://localhost:11434";    
     public string Classification { get; set; } = "";
-    public string Name { get; set; } = "";
+    public string SystemName { get; set; } = "AI Bot";
+    public string UserName { get; set; } = "User";
 }

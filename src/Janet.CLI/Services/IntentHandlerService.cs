@@ -41,7 +41,7 @@ public class IntentHandlerService
                 shouldSummarizeToolResult = true;
                 break;
             default:
-                await _chatService.HandleGeneralChatAsync(history, chatModel, cancellationToken);
+                await _chatService.StreamResponseAsync(userInput, chatModel, cancellationToken);
                 break;
         }
 
@@ -49,7 +49,6 @@ public class IntentHandlerService
         if (shouldSummarizeToolResult && !cancellationToken.IsCancellationRequested)
         {
             AnsiConsole.MarkupLine("[grey]AI is summarizing the action...[/]");
-            await _chatService.HandleGeneralChatAsync(history, chatModel, cancellationToken);
         }
     }
 
