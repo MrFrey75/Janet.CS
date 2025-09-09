@@ -1,9 +1,5 @@
 {
-  "models": {
-    "classification" : "",
-    "chat" : ""
-  },
-  "ollama-settings": {
-    "ApiUrl": "http://localhost:11434"
-  }
+  "ApiUrl": "http://localhost:11434",
+  "Classification": "",
+  "Name": ""
 }

@@ -8,13 +8,6 @@ namespace Janet.CLI.Utilities.Logging;
 /// </summary>
 public static class LoggerService
 {
-    public enum LogLevel
-    {
-        Debug,
-        Info,
-        Warning,
-        Error
-    }
 
     /// <summary>
     /// The current logging level. Messages below this level will not be displayed.

@@ -9,15 +9,18 @@ public class AppRunnerService
     private readonly OllamaApiService _apiService;
     private readonly IntentHandlerService _intentHandlerService;
     private readonly ISpectreLogger _logger;
+    private readonly ConfigService _configService;
 
     public AppRunnerService(
         OllamaApiService apiService,
         IntentHandlerService intentHandlerService,
-        ISpectreLogger logger)
+        ISpectreLogger logger,
+        ConfigService configService)
     {
         _apiService = apiService;
         _intentHandlerService = intentHandlerService;
         _logger = logger;
+        _configService = configService;
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -34,6 +37,11 @@ public class AppRunnerService
 
             var classifierModel = SelectModel("Select a [yellow]fast[/] model for classification:", availableModels);
             var chatModel = SelectModel("Select a [green]powerful[/] model for chat:", availableModels);
+
+            _configService.UpdateSetting("ClassifierModel", classifierModel);
+            _configService.UpdateSetting("ChatModel", chatModel);
+
+
             _logger.Info($"Using '{classifierModel}' for intent and '{chatModel}' for chat.");
 
             AnsiConsole.Clear();
@@ -64,11 +72,12 @@ public class AppRunnerService
 
                 // Streaming chat response
                 AnsiConsole.MarkupLine("[grey]💬 Chatting...[/]");
-                    await _intentHandlerService.HandleIntentAsync(intent, userInput, conversationHistory, chatModel, cancellationToken);
+                await _intentHandlerService.HandleIntentAsync(intent, userInput, conversationHistory, chatModel, cancellationToken);
             }
         }
         catch (OperationCanceledException)
         {
+            _logger.Info("Operation canceled by user.");
             /* Expected on Ctrl+C */
         }
         catch (Exception ex)
