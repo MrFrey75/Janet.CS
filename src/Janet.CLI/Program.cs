@@ -33,7 +33,7 @@ public static class Program
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .Build();
-        
+
         // 2. Bind configuration to a strongly-typed object and register it
         var appSettings = new AppSettings();
         configuration.Bind(appSettings);
@@ -46,5 +46,15 @@ public static class Program
         services.AddTransient<OllamaApiService>();
         services.AddTransient<IntentHandlerService>();
         services.AddTransient<AppRunnerService>();
+
+        // 5. Register ConfigService and load settings
+        services.AddTransient<ConfigService>();
+        var serviceProvider = services.BuildServiceProvider();
+        var configService = serviceProvider.GetRequiredService<ConfigService>();
+        configService.LoadSettingsAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+        // 6. Register ChatService
+        services.AddSingleton<IChatService, ChatService>();
+
     }
 }

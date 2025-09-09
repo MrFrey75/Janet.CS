@@ -16,7 +16,7 @@ public class ConfigService
     
     public async Task LoadSettingsAsync(CancellationToken cancellationToken)
     {
-        var settingsFile = "Janet.CLI/Data/settings.json";
+        var settingsFile = "Data/settings.json";
         try
         {
             using var stream = new FileStream(settingsFile, FileMode.Open, FileAccess.Read, FileShare.Read);
