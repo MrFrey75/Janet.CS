@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7EF7B287-6AB2-4AAF-9EA3-779D7FCA23F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Janet.DubCore", "src\Janet.DubCore\Janet.DubCore.csproj", "{BE0B0457-97D6-4D4F-90F8-372C8A52698B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Janet.DubCli", "src\Janet.DubCli\Janet.DubCli.csproj", "{CD6DF6D8-CFC9-4502-A9EB-7411A034C612}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BE0B0457-97D6-4D4F-90F8-372C8A52698B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE0B0457-97D6-4D4F-90F8-372C8A52698B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE0B0457-97D6-4D4F-90F8-372C8A52698B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE0B0457-97D6-4D4F-90F8-372C8A52698B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD6DF6D8-CFC9-4502-A9EB-7411A034C612}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD6DF6D8-CFC9-4502-A9EB-7411A034C612}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD6DF6D8-CFC9-4502-A9EB-7411A034C612}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD6DF6D8-CFC9-4502-A9EB-7411A034C612}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BE0B0457-97D6-4D4F-90F8-372C8A52698B} = {7EF7B287-6AB2-4AAF-9EA3-779D7FCA23F2}
+		{CD6DF6D8-CFC9-4502-A9EB-7411A034C612} = {7EF7B287-6AB2-4AAF-9EA3-779D7FCA23F2}
+	EndGlobalSection
+EndGlobal
