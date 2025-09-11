@@ -55,10 +55,10 @@ public class Program
         // 5. Register ConfigService and load settingshi
         services.AddSingleton<IAppConfigService, AppConfigService>();
         services.AddSingleton<ILoggingService, LoggingService>();
-        services.AddSingleton<IntentService>();
-        services.AddSingleton<Orchestrator>();
-        services.AddSingleton<ChatService>();
+        services.AddSingleton<IIntentService, IntentService>();
+        services.AddSingleton<IOrchestrator, Orchestrator>();
         services.AddSingleton<AppRunnerService>();
+        services.AddSingleton<ChatService>();
 
         
     }

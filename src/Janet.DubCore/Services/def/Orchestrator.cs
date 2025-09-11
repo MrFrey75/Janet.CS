@@ -1,10 +1,9 @@
-
 using Janet.DubCore.Functions;
 using Janet.DubCore.Models;
 
 namespace Janet.DubCore.Services;
 
-public class Orchestrator
+public class Orchestrator : IOrchestrator
 {
     private readonly IAppConfigService _configService;
     private readonly ILoggingService _loggingService;

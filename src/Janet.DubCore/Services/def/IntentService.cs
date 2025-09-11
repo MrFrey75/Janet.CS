@@ -4,7 +4,7 @@ using Janet.DubCore.Models;
 
 namespace Janet.DubCore.Services;
 
-public class IntentService
+public class IntentService : IIntentService
 {
     private readonly IAppConfigService _configService;
     private readonly ILoggingService _loggingService;

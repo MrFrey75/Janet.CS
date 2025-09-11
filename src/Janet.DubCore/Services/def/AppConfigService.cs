@@ -1,11 +1,8 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Janet.DubCore.Models;
-using Janet.DubCore.Services;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+
+namespace Janet.DubCore.Services;
 
 public class AppConfigService : IAppConfigService
 {
@@ -37,31 +34,31 @@ public class AppConfigService : IAppConfigService
         // A better pattern is an async factory, but this is simpler for this example.
         LoadAsync().GetAwaiter().GetResult();
     }
-    
+
     public async Task LoadAsync()
     {
         await _semaphore.WaitAsync();
         try
         {
-        await _semaphore.WaitAsync();
-        try
-        {
-            if (!File.Exists(_filePath))
+            await _semaphore.WaitAsync();
+            try
             {
-                _settings = new AppConfigSettings(); // Create instance with default values
-                await SaveAsync();     // Save it to create the initial file
+                if (!File.Exists(_filePath))
+                {
+                    _settings = new AppConfigSettings(); // Create instance with default values
+                    await SaveAsync();     // Save it to create the initial file
+                }
+
+                var yaml = await File.ReadAllTextAsync(_filePath);
+                var deserializer = new DeserializerBuilder()
+                    .WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+
+                _settings = deserializer.Deserialize<AppConfigSettings>(yaml) ?? new AppConfigSettings();
             }
-
-            var yaml = await File.ReadAllTextAsync(_filePath);
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-
-            _settings = deserializer.Deserialize<AppConfigSettings>(yaml) ?? new AppConfigSettings();
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
         finally
         {
@@ -81,7 +78,7 @@ public class AppConfigService : IAppConfigService
             _semaphore.Release();
         }
     }
-    
+
     public async Task UpdateAsync(Action<AppConfigSettings> updateAction)
     {
         await _semaphore.WaitAsync();
@@ -89,7 +86,7 @@ public class AppConfigService : IAppConfigService
         {
             // Perform the update on the in-memory settings object
             updateAction(_settings);
-            
+
             // Persist the changes to the file
             await SaveInternalAsync();
         }
