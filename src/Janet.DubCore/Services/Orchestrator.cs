@@ -24,41 +24,57 @@ public class Orchestrator
 
     public ChatResponse ProcessQuery(string query)
     {
-        var intentJson = _intentService.GetIntentAndEntitiesAsJsonAsync(query).GetAwaiter().GetResult();
+        var chatMessage = new ChatMessage("User", query);
+        chatMessage = _intentService.ProcessMessage(chatMessage).GetAwaiter().GetResult();
+        query = chatMessage.Message;
         // Implement your query processing logic here
 
-        if (intentJson.intent == "error")
+        ChatResponse response = new ChatResponse();
+
+        if (chatMessage.Intent != null && chatMessage.Intent.intent == "error")
         {
-            _loggingService.LogWarning($"Error processing query: {query}.");
-            return new ChatResponse($"Error processing query: {query}.");
+            _loggingService.LogWarning($"Error processing query: {chatMessage.Message}.");
+            response.Response = $"Error processing query: {chatMessage.Message}.";
+            return response;
         }
 
-        switch(intentJson.intent.ToLower())
+        if (chatMessage.Intent == null || chatMessage.Intent.intent == null)
+        {
+            _loggingService.LogWarning("Intent or intent name is null.");
+            response.Response = "Error: Unable to process intent.";
+            return response;
+        }
+
+        switch (chatMessage.Intent.intent.ToLower())
         {
             case "set_timer":
-                if (intentJson.entities.TryGetValue("duration", out var duration))
+                if (chatMessage.Intent.entities.TryGetValue("duration", out var duration))
                 {
-                    return new ChatResponse($"Timer set for {duration}.");
+                    response.Response = $"Timer set for {duration}.";
                 }
                 else
                 {
-                    return new ChatResponse("Error: 'duration' entity is missing for 'set_timer' intent.");
+                    response.Response = "Error: 'duration' entity is missing for 'set_timer' intent.";
                 }
+                break;
 
             case "find_weather":
-                if (intentJson.entities.TryGetValue("location", out var location))
+                if (chatMessage.Intent.entities.TryGetValue("location", out var location))
                 {
-                    return new ChatResponse($"Fetching weather for {location}...");
+                    response.Response = $"Fetching weather for {location}...";
                 }
                 else
                 {
-                    return new ChatResponse("Error: 'location' entity is missing for 'find_weather' intent.");
+                    response.Response = "Error: 'location' entity is missing for 'find_weather' intent.";
                 }
+                break;
 
             default:
-                _loggingService.LogWarning($"Unknown intent '{intentJson.intent}' received.");
+                _loggingService.LogWarning($"Unknown intent '{chatMessage.Intent.intent}' received.");
                 return _chatService.ProcessMessage(query).GetAwaiter().GetResult();
         }
+        
+        return response;
 
 
     }

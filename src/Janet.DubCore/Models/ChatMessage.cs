@@ -10,6 +10,7 @@ public class ChatMessage
     public string Message { get; set; }
     public DateTime Timestamp { get; set; }
     public ChatMessageType MessageType { get; set; }
+    public OllamaIntent? Intent { get; set; } = new OllamaIntent();
 
     public ChatMessage(string user, string message, ChatMessageType messageType = ChatMessageType.User)
     {

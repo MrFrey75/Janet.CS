@@ -40,7 +40,7 @@ public class AppRunnerService
             {
                 var response = _orchestrator.ProcessQuery(query);
                 
-                Console.WriteLine($"Response> {response}");
+                Console.WriteLine($"Response> {response.Timestamp}: {response.Response}");
             }
 
 

@@ -5,5 +5,5 @@
 
 ## Documentation
 
-- [Janet CLI](./src/Janet.CLI/README.md)
-- [Janet Core](./src/Janet.Core/README.md)
+- [Janet CLI](./src/Janet.DubCli//README.md)
+- [Janet Core](./src/Janet.DubCore//README.md)
