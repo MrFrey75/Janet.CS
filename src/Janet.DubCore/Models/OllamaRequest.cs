@@ -6,17 +6,17 @@ namespace Janet.DubCore.Models;
     public class OllamaRequest
     {
         [JsonPropertyName("model")]
-        public string Model { get; set; }
+        public string Model { get; set; } = "phi3";
 
         [JsonPropertyName("system")]
-        public string System { get; set; }
+        public string System { get; set; } = string.Empty;
 
         [JsonPropertyName("prompt")]
-        public string Prompt { get; set; }
+        public string Prompt { get; set; } = string.Empty;
 
         [JsonPropertyName("format")]
-        public string Format { get; set; }
+        public string Format { get; set; } = string.Empty;
 
         [JsonPropertyName("stream")]
-        public bool Stream { get; set; }
+        public bool Stream { get; set; } = false;
     }

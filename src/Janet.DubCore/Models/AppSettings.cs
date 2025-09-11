@@ -21,7 +21,7 @@ public class OllamaSettings
     public int MaxTokens { get; set; } = 2048;
     public double Temperature { get; set; } = 0.7;
     public string IntentModelName { get; set; } = "phi3";
-    public string ConversationModelName { get; set; } = "phi3";
+    public string ChatModelName { get; set; } = "phi3";
     // Add other Ollama-specific settings here  
 
 
