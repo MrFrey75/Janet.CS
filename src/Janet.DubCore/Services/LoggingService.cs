@@ -14,7 +14,7 @@ public class LoggingService : ILoggingService
         _configService = configService;
     }
     
-    private AppSettings Settings => _configService.Settings;
+    private AppConfigSettings Settings => _configService.Settings;
     private string LogFilePath => Settings.Logging.LogFilePath;
     private LogLevel LogLevel => Settings.Logging.LogLevel;
     private bool LogToFile => Settings.Logging.LogToFile;

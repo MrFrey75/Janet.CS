@@ -16,6 +16,11 @@ public class AppRunnerService
         _loggingService.LogInfo("AppRunnerService initialized.");
     }
 
+    /// <summary>
+    /// Runs the main application loop, displaying initial settings and handling user queries interactively.
+    /// The method prints application settings, prompts the user for input, processes queries using the orchestrator,
+    /// and logs exit information when the user types "exit".
+    /// </summary>
     public void Run()
     {
         var settings = _configService.Settings;
@@ -29,12 +34,23 @@ public class AppRunnerService
         var query = string.Empty;
         while (query != "exit")
         {
+            // Prompt user for input
             Console.Write($"{_configService.Settings.Persona.UserName}> ");
             query = Console.ReadLine()?.Trim().ToLower() ?? string.Empty;
+
             if (query == "exit")
             {
                 _loggingService.LogInfo("Exiting application.");
                 break;
+            }
+            else if (string.IsNullOrWhiteSpace(query))
+            {
+                continue; // Skip empty input
+            }
+            else if (query == "settings")
+            {
+                Console.WriteLine("Current Settings:");
+                Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(settings, Newtonsoft.Json.Formatting.Indented));
             }
             else if (!string.IsNullOrEmpty(query))
             {

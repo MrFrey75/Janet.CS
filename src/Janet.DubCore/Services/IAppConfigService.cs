@@ -12,7 +12,7 @@ public interface IAppConfigService
     /// <summary>
     /// Gets the current, in-memory application settings.
     /// </summary>
-    AppSettings Settings { get; }
+    AppConfigSettings Settings { get; }
 
     /// <summary>
     /// Loads the settings from the YAML file asynchronously.
@@ -29,5 +29,5 @@ public interface IAppConfigService
     /// Updates the settings in a transactional manner and persists them to the file.
     /// </summary>
     /// <param name="updateAction">An action to perform on the settings object.</param>
-    Task UpdateAsync(Action<AppSettings> updateAction);
+    Task UpdateAsync(Action<AppConfigSettings> updateAction);
 }

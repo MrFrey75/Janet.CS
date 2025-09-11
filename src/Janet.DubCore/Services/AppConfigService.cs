@@ -10,16 +10,16 @@ using YamlDotNet.Serialization.NamingConventions;
 public class AppConfigService : IAppConfigService
 {
     private readonly string _filePath;
-    private AppSettings _settings;
+    private AppConfigSettings _settings;
     // Use a SemaphoreSlim to ensure thread-safe file access
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    public AppSettings Settings => _settings;
+    public AppConfigSettings Settings => _settings;
 
     public AppConfigService()
     {
-        _settings = new AppSettings();
-        _filePath = Path.Combine(AppContext.BaseDirectory, "data", "appsettingsnamespace Janet.DubCore.Services;.yaml");
+        _settings = new AppConfigSettings();
+        _filePath = Path.Combine(AppContext.BaseDirectory, "data", "appsettings.yaml");
         // Ensure the directory exists
         var directory = Path.GetDirectoryName(_filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -28,7 +28,7 @@ public class AppConfigService : IAppConfigService
         }
         if (!File.Exists(_filePath))
         {
-            SaveAsync().GetAwaiter().GetResult(); // Save it to create the initial file
+            SaveAsync().GetAwaiter().GetResult(); // Save it to create the initial fileAppConfigSettings
             return;
         }
 
@@ -43,9 +43,12 @@ public class AppConfigService : IAppConfigService
         await _semaphore.WaitAsync();
         try
         {
+        await _semaphore.WaitAsync();
+        try
+        {
             if (!File.Exists(_filePath))
             {
-                _settings = new AppSettings(); // Create instance with default values
+                _settings = new AppConfigSettings(); // Create instance with default values
                 await SaveAsync();     // Save it to create the initial file
             }
 
@@ -53,7 +56,12 @@ public class AppConfigService : IAppConfigService
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
 
-            _settings = deserializer.Deserialize<AppSettings>(yaml) ?? new AppSettings();
+            _settings = deserializer.Deserialize<AppConfigSettings>(yaml) ?? new AppConfigSettings();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
         }
         finally
         {
@@ -74,7 +82,7 @@ public class AppConfigService : IAppConfigService
         }
     }
     
-    public async Task UpdateAsync(Action<AppSettings> updateAction)
+    public async Task UpdateAsync(Action<AppConfigSettings> updateAction)
     {
         await _semaphore.WaitAsync();
         try
