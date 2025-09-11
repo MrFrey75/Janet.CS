@@ -2,6 +2,8 @@
 // You can add any properties you need, including nested classes.
 using Janet.DubCore.Enum;
 
+namespace Janet.DubCore.Models;
+
 public class AppSettings
 {
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

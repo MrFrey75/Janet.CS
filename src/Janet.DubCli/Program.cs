@@ -1,5 +1,6 @@
 ﻿
 using Janet.DubCli.Services;
+using Janet.DubCore.Functions;
 using Janet.DubCore.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,6 +57,9 @@ public class Program
         services.AddSingleton<ILoggingService, LoggingService>();
         services.AddSingleton<IntentService>();
         services.AddSingleton<Orchestrator>();
+        services.AddSingleton<ChatService>();
         services.AddSingleton<AppRunnerService>();
+
+        
     }
 }

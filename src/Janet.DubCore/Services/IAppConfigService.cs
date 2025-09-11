@@ -1,5 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Janet.DubCore.Models;
+
+namespace Janet.DubCore.Services;
 
 /// <summary>
 /// Defines the contract for a strongly-typed application configuration service.

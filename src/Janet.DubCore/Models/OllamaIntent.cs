@@ -1,4 +1,5 @@
-namespace Janet.DubCore.Services;
+
+namespace Janet.DubCore.Models;
 
 public class OllamaIntent
 {

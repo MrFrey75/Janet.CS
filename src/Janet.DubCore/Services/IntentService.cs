@@ -1,55 +1,57 @@
-using System.Text;
+using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Janet.DubCore.Models;
 
 namespace Janet.DubCore.Services;
 
+/// <summary>
+/// A service to determine user intent and extract entities from a query using the Ollama API.
+/// </summary>
 public class IntentService
 {
-    private readonly IAppConfigService _configService;
+    // Constants for magic strings to avoid typos and centralize values.
+    private const string ErrorIntent = "error";
+    private const string MessageKey = "message";
+    private const string DetailsKey = "details";
+    private const string StatusCodeKey = "status_code";
+    
+    // Using IHttpClientFactory-managed HttpClient is the modern best practice.
+    private readonly HttpClient _httpClient;
     private readonly ILoggingService _loggingService;
-
-    private static readonly HttpClient client = new HttpClient();
-    private readonly string _ollamaApiUrl;
     private readonly string _modelName;
+    private readonly string _ollamaApiUrl;
 
-    public IntentService(IAppConfigService configService, ILoggingService loggingService)
+    public IntentService(HttpClient httpClient, IAppConfigService configService, ILoggingService loggingService)
     {
-        _configService = configService;
+        _httpClient = httpClient;
         _loggingService = loggingService;
 
-        // Ensure the URL from config points to the /api/generate endpoint
-        var baseUrl = _configService.Settings.Ollama.BaseUrl.TrimEnd('/');
-        _ollamaApiUrl = $"{baseUrl}/api/generate";
-        _modelName = _configService.Settings.Ollama.IntentModelName;
+        _modelName = configService.Settings.Ollama.IntentModelName;
+        // The base URL is now configured in Program.cs. We just need the relative path.
+        _ollamaApiUrl = "/api/generate";
 
-        _loggingService.LogInfo($"IntentService initialized [{_modelName}] with Ollama API URL: " + _ollamaApiUrl);
+        _loggingService.LogInfo($"IntentService initialized for model [{_modelName}] targeting endpoint [{_httpClient.BaseAddress}{_ollamaApiUrl}]");
     }
 
-        /// <summary>
-        /// Sends a user query to the Ollama API to extract intent and entities as a JSON object.
-        /// The method constructs a system prompt to guide the model's response format, sends the request,
-        /// and parses the model's output into an <see cref="OllamaIntent"/> instance.
-        /// Handles various error scenarios, including empty queries, API failures, and unexpected exceptions.
-        /// </summary>
-        /// <param name="userQuery">The user's input query to analyze for intent and entities.</param>
-        /// <returns>
-        /// An <see cref="OllamaIntent"/> object containing the extracted intent and entities,
-        /// or an error intent with details if the operation fails.
-        /// </returns>
-        /// <exception cref="HttpRequestException">
-        /// Thrown when there is a network-related error communicating with the Ollama API.
-        /// </exception>
-        /// <exception cref="Exception">
-        /// Thrown when an unexpected error occurs, such as serialization issues.
-        /// </exception>
-        public async Task<OllamaIntent> GetIntentAndEntitiesAsJsonAsync(string userQuery)
+    /// <summary>
+    /// Sends a user query to the Ollama API to extract intent and entities as a JSON object.
+    /// This method is designed to be resilient, handling various API and network failures gracefully.
+    /// </summary>
+    /// <param name="userQuery">The user's input query to analyze.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// An <see cref="OllamaIntent"/> object containing the extracted intent and entities,
+    /// or a standardized error intent if the operation fails.
+    /// </returns>
+    public async Task<OllamaIntent> GetIntentAndEntitiesAsJsonAsync(string userQuery, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(userQuery))
         {
-            return new OllamaIntent { intent = "error", entities = { { "message", "Query cannot be empty." } } };
+            return CreateErrorResponse("Query cannot be empty.");
         }
 
-        // This system prompt guides the model on its role and the structure of the JSON it should produce.
         const string systemPrompt = @"You are an expert at extracting user intent and entities from a given query. 
 Your response MUST be a single, well-formed JSON object and nothing else.
 The JSON object should have two top-level properties:
@@ -57,76 +59,81 @@ The JSON object should have two top-level properties:
 2. 'entities': An object containing key-value pairs of extracted information (e.g., {'location': 'Paris', 'date': 'tomorrow'}).
 Do not add any explanations, comments, or markdown formatting around the JSON.";
 
-        // The request payload for the Ollama API.
         var requestPayload = new OllamaRequest
         {
             Model = _modelName,
             System = systemPrompt,
             Prompt = $"User Query: \"{userQuery}\"",
-            Format = "json", // Enables Ollama's JSON mode.
+            Format = "json",
             Stream = false
         };
 
         try
         {
-            // Serialize the payload and create the HTTP request content.
-            string jsonPayload = JsonSerializer.Serialize(requestPayload);
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            // PostAsJsonAsync handles serialization for us.
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(_ollamaApiUrl, requestPayload, cancellationToken);
 
-            // Send the POST request to the Ollama API.
-            HttpResponseMessage response = await client.PostAsync(_ollamaApiUrl, content);
+            // Throws an HttpRequestException if the response status code is not a success code.
+            // This simplifies the control flow by catching non-success codes in the HttpRequestException block.
+            response.EnsureSuccessStatusCode();
 
-            // Read the response content regardless of status code.
-            string responseBody = await response.Content.ReadAsStringAsync();
+            var ollamaResponse = await response.Content.ReadFromJsonAsync<OllamaResponse>(cancellationToken: cancellationToken);
 
-            if (response.IsSuccessStatusCode)
+            if (string.IsNullOrWhiteSpace(ollamaResponse?.Response))
             {
-                // The model's output is nested within the API response.
-                var ollamaResponse = JsonSerializer.Deserialize<OllamaResponse>(responseBody);
-
-                if (ollamaResponse != null && !string.IsNullOrWhiteSpace(ollamaResponse.Response))
-                {
-
-                    var intent = JsonSerializer.Deserialize<OllamaIntent>(ollamaResponse.Response) ?? new OllamaIntent { intent = "error", entities = { { "message", "Failed to parse intent from model response." } } };
-                    //_loggingService.LogDebug("Ollama raw response:", responseBody);
-                    // The 'Response' property contains the JSON string generated by the model.
-                    return intent;
-                }
-                else
-                {
-                    _loggingService.LogWarning("Ollama response is null or empty.");
-                    return new OllamaIntent { intent = "error", entities = { { "message", "Model response is null or empty." } } };
-                }
+                _loggingService.LogWarning("Ollama response content is null or empty.");
+                return CreateErrorResponse("Model response is null or empty.");
             }
-            else
-            {
-                _loggingService.LogError($"Ollama API call failed with status code: {(int)response.StatusCode}");
-                _loggingService.LogDebug("Ollama error response:", responseBody);
-                // Handle non-successful HTTP status codes.
-                return new OllamaIntent { intent = "error", entities = { { "message", "Failed to call Ollama API." }, { "status_code", ((int)response.StatusCode).ToString() }, { "details", responseBody } } };
-            }
+
+            // The 'Response' property contains the JSON string generated by the model.
+            var intent = JsonSerializer.Deserialize<OllamaIntent>(ollamaResponse.Response);
+
+            return intent ?? CreateErrorResponse("Failed to parse intent from model response.");
         }
         catch (HttpRequestException e)
         {
-            _loggingService.LogError("HTTP request to Ollama API failed: " + e.Message);
-            _loggingService.LogDebug("Ollama error response:", e.ToString());
-            // Handle network-related errors (e.g., Ollama server is not running).
-            return new OllamaIntent
-            {
-                intent = "error",
-                entities = { { "message", "Could not connect to the Ollama service. Please ensure it is running." }, { "details", e.Message } }
-            };
+            _loggingService.LogError($"Ollama API call failed: {e.Message}", e);
+            return CreateHttpErrorResponse(e);
+        }
+        catch (JsonException e)
+        {
+            _loggingService.LogError($"Failed to deserialize Ollama response: {e.Message}", e);
+            return CreateErrorResponse("Failed to parse JSON response from the service.", e.Message);
+        }
+        catch (TaskCanceledException)
+        {
+            _loggingService.LogWarning("Ollama API request was canceled.");
+            return CreateErrorResponse("The request was canceled.");
         }
         catch (Exception e)
         {
-            // Handle other potential exceptions, such as serialization errors.
-            _loggingService.LogError("An unexpected error occurred: " + e.Message);
-            _loggingService.LogDebug("Ollama error response:", e.ToString());
-            return new OllamaIntent
-            {
-                intent = "error",
-                entities = { { "message", "An unexpected error occurred." }, { "details", e.Message } }
-            };
+            _loggingService.LogError($"An unexpected error occurred in IntentService: {e.Message}", e);
+            return CreateErrorResponse("An unexpected error occurred.", e.Message);
         }
+    }
+
+    // Helper method to create a standardized error response.
+    private static OllamaIntent CreateErrorResponse(string message, string? details = null)
+    {
+        var intent = new OllamaIntent { intent = ErrorIntent };
+        intent.entities[MessageKey] = message;
+        if (details is not null)
+        {
+            intent.entities[DetailsKey] = details;
+        }
+        return intent;
+    }
+
+    // Helper method to create a standardized HTTP error response.
+    private static OllamaIntent CreateHttpErrorResponse(HttpRequestException e)
+    {
+        var intent = new OllamaIntent { intent = ErrorIntent };
+        intent.entities[MessageKey] = "Could not connect to the Ollama service. Please ensure it is running.";
+        intent.entities[DetailsKey] = e.Message;
+        if (e.StatusCode is not null)
+        {
+            intent.entities[StatusCodeKey] = ((int)e.StatusCode).ToString();
+        }
+        return intent;
     }
 }

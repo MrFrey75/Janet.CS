@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 
-namespace Janet.DubCore.Services;
+
+namespace Janet.DubCore.Models;
 
     public class OllamaResponse
     {

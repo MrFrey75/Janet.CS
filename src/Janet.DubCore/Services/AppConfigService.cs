@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Janet.DubCore.Models;
+using Janet.DubCore.Services;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -17,7 +19,7 @@ public class AppConfigService : IAppConfigService
     public AppConfigService()
     {
         _settings = new AppSettings();
-        _filePath = Path.Combine(AppContext.BaseDirectory, "data", "appsettings.yaml");
+        _filePath = Path.Combine(AppContext.BaseDirectory, "data", "appsettingsnamespace Janet.DubCore.Services;.yaml");
         // Ensure the directory exists
         var directory = Path.GetDirectoryName(_filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -50,7 +52,7 @@ public class AppConfigService : IAppConfigService
             var yaml = await File.ReadAllTextAsync(_filePath);
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
-            
+
             _settings = deserializer.Deserialize<AppSettings>(yaml) ?? new AppSettings();
         }
         finally
