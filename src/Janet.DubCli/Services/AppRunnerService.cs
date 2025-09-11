@@ -29,7 +29,7 @@ public class AppRunnerService
         var query = string.Empty;
         while (query != "exit")
         {
-            Console.Write("User> ");
+            Console.Write($"{_configService.Settings.Persona.UserName}> ");
             query = Console.ReadLine()?.Trim().ToLower() ?? string.Empty;
             if (query == "exit")
             {
@@ -39,8 +39,8 @@ public class AppRunnerService
             else if (!string.IsNullOrEmpty(query))
             {
                 var response = _orchestrator.ProcessQuery(query);
-                
-                Console.WriteLine($"Response> {response.Timestamp}: {response.Response}");
+
+                Console.WriteLine($"{_configService.Settings.Persona.AssistantName}> {response.Timestamp}: {response.Response}");
             }
 
 
